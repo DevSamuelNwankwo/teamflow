@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { projectsApi, type CreateProjectInput, type UpdateProjectInput } from '@/api/projectsApi'
 import { useAuth } from '@/contexts/AuthContext'
 import { projectKeys } from './useProjects'
+import { activityKeys } from './useActivity'
 
 function useActor() {
   const { user, profile } = useAuth()
@@ -16,6 +17,7 @@ export function useCreateProject() {
     mutationFn: (input: CreateProjectInput) => projectsApi.create(input, actorId, actorName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.all })
+      queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
   })
 }
@@ -29,6 +31,7 @@ export function useUpdateProject(projectId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.all })
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(projectId) })
+      queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
   })
 }
@@ -42,6 +45,7 @@ export function useDeleteProject() {
       projectsApi.delete(id, actorId, actorName, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.all })
+      queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
   })
 }

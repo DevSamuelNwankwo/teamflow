@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { tasksApi, type CreateTaskInput, type ReorderUpdate, type UpdateTaskInput } from '@/api/tasksApi'
 import { useAuth } from '@/contexts/AuthContext'
 import { taskKeys } from './useTasks'
+import { activityKeys } from './useActivity'
 import { notify } from '@/lib/toast'
 import { getReadableError } from '@/api/errors'
 import type { TaskWithAssignee } from '@/types/task'
@@ -20,6 +21,7 @@ export function useCreateTask(projectId: string, projectName: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.byProject(projectId) })
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
+      queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
   })
 }
@@ -34,6 +36,7 @@ export function useUpdateTask(projectId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.byProject(projectId) })
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
+      queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
   })
 }
@@ -48,6 +51,7 @@ export function useDeleteTask(projectId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.byProject(projectId) })
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
+      queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
   })
 }
@@ -95,6 +99,7 @@ export function useReorderTasks(projectId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey })
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
+      queryClient.invalidateQueries({ queryKey: activityKeys.all })
     },
   })
 }
