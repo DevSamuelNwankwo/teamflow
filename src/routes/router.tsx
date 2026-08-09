@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute, RedirectIfAuthenticated } from './ProtectedRoute'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ErrorPage } from '@/pages/ErrorPage'
 
 /** Wraps a named export as a React.lazy-compatible default export, so route-level code
  *  splitting doesn't force every page to switch to `export default`. Keeps heavy per-page
@@ -34,44 +35,53 @@ function PageFallback() {
 }
 
 export const router = createBrowserRouter([
-  { index: true, element: <Navigate to="/app/dashboard" replace /> },
   {
-    element: <RedirectIfAuthenticated />,
+    // Root layout route with no path — every top-level route below is its child, so any error
+    // thrown during render/loading anywhere in the tree (including a lazy-chunk load failure
+    // vite:preloadError didn't catch) bubbles up to this one errorElement instead of React
+    // Router's default "Unexpected Application Error!" screen.
+    errorElement: <ErrorPage />,
     children: [
+      { index: true, element: <Navigate to="/app/dashboard" replace /> },
       {
-        path: '/login',
-        element: (
-          <Suspense fallback={<PageFallback />}>
-            <LoginPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: '/register',
-        element: (
-          <Suspense fallback={<PageFallback />}>
-            <RegisterPage />
-          </Suspense>
-        ),
-      },
-    ],
-  },
-  {
-    path: '/app',
-    element: <ProtectedRoute />,
-    children: [
-      {
-        element: <AppShell />,
+        element: <RedirectIfAuthenticated />,
         children: [
-          { path: 'dashboard', element: <DashboardPage /> },
-          { path: 'projects', element: <ProjectsPage /> },
-          { path: 'projects/:projectId', element: <ProjectDetailPage /> },
-          { path: 'tasks', element: <TasksPage /> },
-          { path: 'team', element: <TeamPage /> },
-          { path: 'activity', element: <ActivityPage /> },
+          {
+            path: '/login',
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <LoginPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: '/register',
+            element: (
+              <Suspense fallback={<PageFallback />}>
+                <RegisterPage />
+              </Suspense>
+            ),
+          },
         ],
       },
+      {
+        path: '/app',
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <AppShell />,
+            children: [
+              { path: 'dashboard', element: <DashboardPage /> },
+              { path: 'projects', element: <ProjectsPage /> },
+              { path: 'projects/:projectId', element: <ProjectDetailPage /> },
+              { path: 'tasks', element: <TasksPage /> },
+              { path: 'team', element: <TeamPage /> },
+              { path: 'activity', element: <ActivityPage /> },
+            ],
+          },
+        ],
+      },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
-  { path: '*', element: <NotFoundPage /> },
 ])
