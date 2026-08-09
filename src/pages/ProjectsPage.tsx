@@ -24,7 +24,7 @@ import { getReadableError } from '@/api/errors'
 type DialogState = { mode: 'create' } | { mode: 'edit'; project: ProjectWithMembers } | null
 
 export function ProjectsPage() {
-  const { data: projects, isLoading, isError, refetch } = useProjects()
+  const { data: projects, isLoading, isError, error, refetch } = useProjects()
   const { data: members } = useTeamMembers()
   const { filters, setFilter, clearFilters } = useUrlFilters()
   const [dialog, setDialog] = useState<DialogState>(null)
@@ -99,7 +99,7 @@ export function ProjectsPage() {
 
       {isLoading && <CardSkeletonGrid />}
 
-      {isError && <ErrorState message="Couldn't load projects." onRetry={() => refetch()} />}
+      {isError && <ErrorState title="Couldn't load projects." error={error} onRetry={() => refetch()} />}
 
       {!isLoading && !isError && projects && projects.length === 0 && (
         <EmptyState

@@ -9,11 +9,12 @@ interface ActivityTimelineProps {
   activities?: ActivityRow[]
   isLoading?: boolean
   isError?: boolean
+  error?: unknown
   onRetry?: () => void
   emptyDescription?: string
 }
 
-export function ActivityTimeline({ activities, isLoading, isError, onRetry, emptyDescription }: ActivityTimelineProps) {
+export function ActivityTimeline({ activities, isLoading, isError, error, onRetry, emptyDescription }: ActivityTimelineProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -25,7 +26,7 @@ export function ActivityTimeline({ activities, isLoading, isError, onRetry, empt
   }
 
   if (isError) {
-    return <ErrorState message="Couldn't load activity." onRetry={onRetry} />
+    return <ErrorState title="Couldn't load activity." error={error} onRetry={onRetry} />
   }
 
   if (!activities || activities.length === 0) {

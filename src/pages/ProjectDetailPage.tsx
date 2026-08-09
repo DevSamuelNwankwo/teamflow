@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const navigate = useNavigate()
-  const { data: project, isLoading, isError, refetch } = useProject(projectId)
+  const { data: project, isLoading, isError, error, refetch } = useProject(projectId)
   const updateProject = useUpdateProject(projectId ?? '')
   const deleteProject = useDeleteProject()
   const projectActivity = useProjectActivity(projectId)
@@ -43,7 +43,7 @@ export function ProjectDetailPage() {
   }
 
   if (isError) {
-    return <ErrorState message="Couldn't load this project." onRetry={() => refetch()} />
+    return <ErrorState title="Couldn't load this project." error={error} onRetry={() => refetch()} />
   }
 
   if (!project) {
@@ -148,6 +148,7 @@ export function ProjectDetailPage() {
           activities={projectActivity.data}
           isLoading={projectActivity.isLoading}
           isError={projectActivity.isError}
+          error={projectActivity.error}
           onRetry={() => projectActivity.refetch()}
           emptyDescription="Changes to this project and its tasks will show up here."
         />

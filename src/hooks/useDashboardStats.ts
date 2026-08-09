@@ -35,6 +35,7 @@ export function useDashboardStats() {
     tasks: tasksQuery.data ?? [],
     isLoading: projectsQuery.isLoading || membersQuery.isLoading || tasksQuery.isLoading,
     isError: projectsQuery.isError || membersQuery.isError || tasksQuery.isError,
+    error: projectsQuery.error ?? membersQuery.error ?? tasksQuery.error,
     refetch: () => {
       projectsQuery.refetch()
       membersQuery.refetch()

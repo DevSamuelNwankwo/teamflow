@@ -21,7 +21,7 @@ import { formatDueLabel } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 export function TasksPage() {
-  const { data: tasks, isLoading, isError, refetch } = useAllTasks()
+  const { data: tasks, isLoading, isError, error, refetch } = useAllTasks()
   const { data: projects } = useProjects()
   const { data: members } = useTeamMembers()
   const { filters, setFilter, clearFilters } = useUrlFilters()
@@ -62,7 +62,7 @@ export function TasksPage() {
         </div>
       )}
 
-      {isError && <ErrorState message="Couldn't load tasks." onRetry={() => refetch()} />}
+      {isError && <ErrorState title="Couldn't load tasks." error={error} onRetry={() => refetch()} />}
 
       {!isLoading && !isError && tasks && tasks.length === 0 && (
         <EmptyState

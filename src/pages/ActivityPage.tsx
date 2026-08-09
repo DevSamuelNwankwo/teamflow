@@ -2,7 +2,7 @@ import { useRecentActivity } from '@/hooks/useActivity'
 import { ActivityTimeline } from '@/components/activity/ActivityTimeline'
 
 export function ActivityPage() {
-  const { data, isLoading, isError, refetch } = useRecentActivity(50)
+  const { data, isLoading, isError, error, refetch } = useRecentActivity(50)
 
   return (
     <div>
@@ -18,8 +18,9 @@ export function ActivityPage() {
           activities={data}
           isLoading={isLoading}
           isError={isError}
+          error={error}
           onRetry={() => refetch()}
-          emptyDescription="Create or update a project to see activity appear here. Task activity arrives once the Kanban board ships."
+          emptyDescription="Create or update a project or task to see activity appear here."
         />
       </div>
     </div>

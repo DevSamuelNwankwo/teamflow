@@ -33,7 +33,7 @@ function toTaskInput(values: TaskFormValues) {
 }
 
 export function ProjectKanbanSection({ projectId, projectName }: { projectId: string; projectName: string }) {
-  const { data: tasks, isLoading, isError, refetch } = useProjectTasks(projectId)
+  const { data: tasks, isLoading, isError, error, refetch } = useProjectTasks(projectId)
   const [dialog, setDialog] = useState<DialogState>(null)
   const [deleteTarget, setDeleteTarget] = useState<TaskWithAssignee | null>(null)
 
@@ -85,7 +85,7 @@ export function ProjectKanbanSection({ projectId, projectName }: { projectId: st
   }
 
   if (isError) {
-    return <ErrorState message="Couldn't load tasks for this project." onRetry={() => refetch()} />
+    return <ErrorState title="Couldn't load tasks for this project." error={error} onRetry={() => refetch()} />
   }
 
   return (

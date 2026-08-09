@@ -29,7 +29,7 @@ export function DashboardPage() {
   }
 
   if (stats.isError) {
-    return <ErrorState message="Couldn't load your dashboard." onRetry={stats.refetch} />
+    return <ErrorState title="Couldn't load your dashboard." error={stats.error} onRetry={stats.refetch} />
   }
 
   return (
@@ -77,6 +77,7 @@ export function DashboardPage() {
             activities={activity.data}
             isLoading={activity.isLoading}
             isError={activity.isError}
+            error={activity.error}
             onRetry={() => activity.refetch()}
           />
         </div>

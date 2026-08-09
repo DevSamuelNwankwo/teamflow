@@ -7,7 +7,7 @@ import { ErrorState } from '@/components/ui/ErrorState'
 import { CardSkeletonGrid } from '@/components/ui/Skeleton'
 
 export function TeamPage() {
-  const { data: members, isLoading, isError, refetch } = useTeamMembers()
+  const { data: members, isLoading, isError, error, refetch } = useTeamMembers()
   const { workloadByMemberId, isLoading: workloadLoading } = useMemberWorkload()
 
   return (
@@ -20,7 +20,7 @@ export function TeamPage() {
       </div>
 
       {(isLoading || workloadLoading) && <CardSkeletonGrid count={3} />}
-      {isError && <ErrorState message="Couldn't load team members." onRetry={() => refetch()} />}
+      {isError && <ErrorState title="Couldn't load team members." error={error} onRetry={() => refetch()} />}
 
       {!isLoading && !isError && members && members.length === 0 && (
         <EmptyState icon={Users} title="No team members yet" description="Invite teammates by having them register an account." />
