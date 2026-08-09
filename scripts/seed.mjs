@@ -1,14 +1,18 @@
-// Seeds a few realistic projects/tasks for a demo account, using the same anon-key + RLS path
+// Seeds a few realistic projects/tasks for a demo workspace, using the same anon-key + RLS path
 // the app itself uses (not the service role key) — so it only ever writes what a signed-in user
-// legitimately could.
+// legitimately could. Tasks and project membership are distributed round-robin across every
+// profile that exists in the workspace, so assignment is visible on more than one avatar.
 //
 // Usage:
-//   1. Register the demo account through the app once (Sign up page). If your Supabase project
-//      requires email confirmation, either confirm it via the link Supabase emails, or turn off
-//      "Confirm email" under Authentication → Providers → Email for local/demo use.
+//   1. Register the demo account through the app once (Sign up page) — and optionally a second
+//      account to see assignment across teammates. If your Supabase project requires email
+//      confirmation, either confirm it via the link Supabase emails, or turn off "Confirm email"
+//      under Authentication → Providers → Email for local/demo use.
 //   2. node --env-file=.env.local scripts/seed.mjs
 //
-// Safe to re-run: it skips any demo project that already exists by name instead of duplicating it.
+// Safe to re-run: skips any project/task that already exists by name, and re-applies
+// assignment/project-membership to existing rows too (so running it again after a new teammate
+// registers redistributes assignments to include them).
 
 // Node < 22 has no native WebSocket global, which @supabase/supabase-js's realtime client
 // expects to exist even though this script never opens a realtime subscription.
@@ -43,6 +47,10 @@ if (authError) {
 const demoId = authData.user.id
 console.log(`Signed in as ${DEMO_EMAIL} (${demoId})`)
 
+const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id, name').order('created_at')
+if (profilesError) throw profilesError
+console.log(`Found ${profiles.length} team member(s): ${profiles.map((p) => p.name).join(', ')}`)
+
 async function logActivity(type, message, projectId, taskId) {
   await supabase.from('activity').insert({ type, actor_id: demoId, project_id: projectId ?? null, task_id: taskId ?? null, message })
 }
@@ -61,15 +69,15 @@ const projectsToCreate = [
   { name: 'Q3 Customer Onboarding', description: 'Streamline the first-week experience for new customers.', status: 'COMPLETED', priority: 'MEDIUM', start_date: daysFromNow(-60), due_date: daysFromNow(-10) },
 ]
 
-const { data: existing } = await supabase.from('projects').select('id, name').eq('created_by', demoId)
-const existingNames = new Set((existing ?? []).map((p) => p.name))
+const { data: existingProjects } = await supabase.from('projects').select('id, name').eq('created_by', demoId)
+const existingProjectNames = new Set((existingProjects ?? []).map((p) => p.name))
 
 const createdProjects = []
 for (const p of projectsToCreate) {
-  if (existingNames.has(p.name)) {
-    const found = existing.find((e) => e.name === p.name)
+  if (existingProjectNames.has(p.name)) {
+    const found = existingProjects.find((e) => e.name === p.name)
     createdProjects.push({ ...p, id: found.id })
-    console.log('Skipping (already exists):', p.name)
+    console.log('Project already exists, reusing:', p.name)
     continue
   }
   const { data, error } = await supabase.from('projects').insert({ ...p, created_by: demoId }).select().single()
@@ -77,6 +85,19 @@ for (const p of projectsToCreate) {
   createdProjects.push(data)
   await logActivity('PROJECT_CREATED', `Demo User created project "${data.name}"`, data.id)
   console.log('Created project:', data.name)
+}
+
+// Every profile in the workspace joins every seeded project, so "Team" shows more than one
+// avatar on the project cards/detail page instead of "Unassigned".
+for (const project of createdProjects) {
+  const { data: existingMembers } = await supabase.from('project_members').select('member_id').eq('project_id', project.id)
+  const existingMemberIds = new Set((existingMembers ?? []).map((m) => m.member_id))
+  const missing = profiles.filter((p) => !existingMemberIds.has(p.id))
+  if (missing.length > 0) {
+    const { error } = await supabase.from('project_members').insert(missing.map((p) => ({ project_id: project.id, member_id: p.id })))
+    if (error) throw error
+    console.log(`Added ${missing.map((p) => p.name).join(', ')} to "${project.name}"`)
+  }
 }
 
 const [mobileApp, apiMigration, , onboarding] = createdProjects
@@ -94,15 +115,34 @@ const tasksToCreate = [
   { project: onboarding, title: 'Add product tour', status: 'COMPLETED', priority: 'LOW', due_date: daysFromNow(-12), tags: ['onboarding'] },
 ]
 
-const { data: existingTasks } = await supabase.from('tasks').select('title, project_id').eq('created_by', demoId)
-const existingTaskKey = new Set((existingTasks ?? []).map((t) => `${t.project_id}:${t.title}`))
+const { data: existingTasks } = await supabase.from('tasks').select('id, title, project_id, assigned_member_id').eq('created_by', demoId)
+const existingTaskByKey = new Map((existingTasks ?? []).map((t) => [`${t.project_id}:${t.title}`, t]))
 
 let position = 1000
+let assignIndex = 0
+function nextAssignee() {
+  const p = profiles[assignIndex % profiles.length]
+  assignIndex += 1
+  return p
+}
+
 for (const t of tasksToCreate) {
-  if (existingTaskKey.has(`${t.project.id}:${t.title}`)) {
-    console.log('Skipping (already exists):', t.title)
+  const key = `${t.project.id}:${t.title}`
+  const existingTask = existingTaskByKey.get(key)
+  const assignee = nextAssignee()
+
+  if (existingTask) {
+    if (existingTask.assigned_member_id !== assignee.id) {
+      const { error } = await supabase.from('tasks').update({ assigned_member_id: assignee.id }).eq('id', existingTask.id)
+      if (error) throw error
+      await logActivity('TASK_ASSIGNED', `Demo User assigned task "${t.title}" to ${assignee.name}`, t.project.id, existingTask.id)
+      console.log(`Reassigned "${t.title}" to ${assignee.name}`)
+    } else {
+      console.log('Task already exists and correctly assigned:', t.title)
+    }
     continue
   }
+
   const { data, error } = await supabase
     .from('tasks')
     .insert({
@@ -113,7 +153,7 @@ for (const t of tasksToCreate) {
       due_date: t.due_date,
       tags: t.tags,
       position,
-      assigned_member_id: demoId,
+      assigned_member_id: assignee.id,
       created_by: demoId,
     })
     .select()
@@ -121,7 +161,8 @@ for (const t of tasksToCreate) {
   if (error) throw error
   position += 1000
   await logActivity('TASK_CREATED', `Demo User created task "${data.title}" in ${t.project.name}`, t.project.id, data.id)
-  console.log('Created task:', data.title)
+  await logActivity('TASK_ASSIGNED', `Demo User assigned task "${data.title}" to ${assignee.name}`, t.project.id, data.id)
+  console.log(`Created task "${data.title}", assigned to ${assignee.name}`)
 }
 
 console.log('Seed complete.')

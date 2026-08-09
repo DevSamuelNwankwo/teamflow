@@ -5,7 +5,10 @@ drag-and-drop Kanban board, team members, an activity timeline, and a dashboard 
 summarizes what's going on, in light or dark mode.
 
 **Live demo:** https://teamflow-lime-one.vercel.app
-**Demo account:** `demo@teamflow.app` / `TeamFlowDemo123!` (pre-seeded with 4 projects and 10 tasks — see [Seeding demo data](#seeding-demo-data))
+**Demo accounts:** `demo@teamflow.app` / `TeamFlowDemo123!` and `kevin@teamflow.app` /
+`TeamFlowDemo123!` — two team members sharing 4 projects and 10 tasks, with assignments split
+between them so you can see the Team/assignment features without creating a second account
+yourself (see [Seeding demo data](#seeding-demo-data))
 
 ## Table of contents
 
@@ -148,12 +151,15 @@ empty states everywhere:
 
 1. Register the demo account through the app itself (`/register`) — default expected credentials
    are `demo@teamflow.app` / `TeamFlowDemo123!`, or set `SEED_DEMO_EMAIL`/`SEED_DEMO_PASSWORD` env
-   vars to use your own. Confirm its email if your project requires it.
+   vars to use your own. Confirm its email if your project requires it. Optionally register a
+   second account too (e.g. `kevin@teamflow.app`) — the script assigns tasks/project membership
+   round-robin across *every* profile it finds, so a second account gets real assignments instead
+   of everything landing on one user.
 2. Run the seed script:
    ```bash
    npm run seed
    ```
-   It signs in as that account (using the same anon key + RLS path the app uses — never the
+   It signs in as the first account (using the same anon key + RLS path the app uses — never the
    service role key) and creates 4 projects across every status plus 10 tasks across every
    Kanban column. Safe to re-run — it skips anything that already exists by name.
 
