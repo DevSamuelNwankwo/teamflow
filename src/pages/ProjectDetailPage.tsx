@@ -15,6 +15,8 @@ import { ErrorState } from '@/components/ui/ErrorState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { ProjectKanbanSection } from '@/components/tasks/ProjectKanbanSection'
+import { ActivityTimeline } from '@/components/activity/ActivityTimeline'
+import { useProjectActivity } from '@/hooks/useActivity'
 import { formatDate, formatDueLabel } from '@/lib/formatters'
 import { notify } from '@/lib/toast'
 import { getReadableError } from '@/api/errors'
@@ -26,6 +28,7 @@ export function ProjectDetailPage() {
   const { data: project, isLoading, isError, refetch } = useProject(projectId)
   const updateProject = useUpdateProject(projectId ?? '')
   const deleteProject = useDeleteProject()
+  const projectActivity = useProjectActivity(projectId)
 
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -137,6 +140,17 @@ export function ProjectDetailPage() {
 
       <div className="mt-6">
         <ProjectKanbanSection projectId={project.id} projectName={project.name} />
+      </div>
+
+      <div className="mt-6 rounded-card border border-border-default bg-surface p-4 shadow-card">
+        <h3 className="mb-1 text-sm font-semibold text-text-primary">Activity</h3>
+        <ActivityTimeline
+          activities={projectActivity.data}
+          isLoading={projectActivity.isLoading}
+          isError={projectActivity.isError}
+          onRetry={() => projectActivity.refetch()}
+          emptyDescription="Changes to this project and its tasks will show up here."
+        />
       </div>
 
       <Modal open={editing} onClose={() => setEditing(false)} title="Edit project" size="lg">
