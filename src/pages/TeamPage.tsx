@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react'
 import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useMemberWorkload } from '@/hooks/useMemberWorkload'
 import { MemberCard } from '@/components/team/MemberCard'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
@@ -7,6 +8,7 @@ import { CardSkeletonGrid } from '@/components/ui/Skeleton'
 
 export function TeamPage() {
   const { data: members, isLoading, isError, refetch } = useTeamMembers()
+  const { workloadByMemberId, isLoading: workloadLoading } = useMemberWorkload()
 
   return (
     <div>
@@ -17,17 +19,17 @@ export function TeamPage() {
         </p>
       </div>
 
-      {isLoading && <CardSkeletonGrid count={3} />}
+      {(isLoading || workloadLoading) && <CardSkeletonGrid count={3} />}
       {isError && <ErrorState message="Couldn't load team members." onRetry={() => refetch()} />}
 
       {!isLoading && !isError && members && members.length === 0 && (
         <EmptyState icon={Users} title="No team members yet" description="Invite teammates by having them register an account." />
       )}
 
-      {!isLoading && !isError && members && members.length > 0 && (
+      {!isLoading && !workloadLoading && !isError && members && members.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {members.map((member) => (
-            <MemberCard key={member.id} member={member} />
+            <MemberCard key={member.id} member={member} workload={workloadByMemberId.get(member.id)} />
           ))}
         </div>
       )}
