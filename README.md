@@ -4,7 +4,7 @@ A collaborative project & task management SaaS for small software teams — proj
 drag-and-drop Kanban board, team members, an activity timeline, and a dashboard that actually
 summarizes what's going on, in light or dark mode.
 
-**Live demo:** _add your deployed URL here after running the Vercel deploy step below_
+**Live demo:** https://teamflow-lime-one.vercel.app
 **Demo account:** `demo@teamflow.app` / `TeamFlowDemo123!` (pre-seeded with 4 projects and 10 tasks — see [Seeding demo data](#seeding-demo-data))
 
 ## Table of contents
