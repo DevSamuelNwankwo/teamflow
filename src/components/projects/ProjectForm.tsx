@@ -45,7 +45,7 @@ export function ProjectForm({ defaultValues, onSubmit, onCancel, submitLabel = '
         <Textarea placeholder="What is this project about?" {...register('description')} />
       </FormField>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Status" error={errors.status?.message} required>
           <Select {...register('status')}>
             {PROJECT_STATUSES.map((status) => (
@@ -67,7 +67,7 @@ export function ProjectForm({ defaultValues, onSubmit, onCancel, submitLabel = '
         </FormField>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Start date" error={errors.start_date?.message} required>
           <Input type="date" {...register('start_date')} />
         </FormField>

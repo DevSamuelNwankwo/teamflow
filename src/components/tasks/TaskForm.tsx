@@ -44,7 +44,7 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, submitLabel = 'Sav
         <Textarea placeholder="What needs to be done?" {...register('description')} />
       </FormField>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Status" error={errors.status?.message} required>
           <Select {...register('status')}>
             {TASK_STATUSES.map((status) => (
@@ -66,7 +66,7 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, submitLabel = 'Sav
         </FormField>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label="Due date" error={errors.due_date?.message}>
           <Input type="date" {...register('due_date')} />
         </FormField>
