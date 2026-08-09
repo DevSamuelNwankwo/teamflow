@@ -36,10 +36,11 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       {...listeners}
       onClick={onClick}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          // Space is dnd-kit's lift/drop key; only treat a plain Enter as "open".
-          if (e.key === 'Enter') onClick()
-        }
+        // `listeners.onKeyDown` is dnd-kit's KeyboardSensor activator (Space to lift/drop,
+        // arrows to move) — it MUST still run, or spreading a JSX prop after {...listeners}
+        // would silently replace it and break keyboard drag entirely.
+        listeners?.onKeyDown?.(e)
+        if (e.key === 'Enter') onClick()
       }}
       role="button"
       tabIndex={0}

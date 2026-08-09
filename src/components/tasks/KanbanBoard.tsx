@@ -7,6 +7,7 @@ import {
   closestCorners,
   useSensor,
   useSensors,
+  type Announcements,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -60,6 +61,38 @@ export function KanbanBoard({ projectId, tasks, onTaskClick }: KanbanBoardProps)
 
   function findColumnOf(id: string): TaskStatus | undefined {
     return (Object.keys(columns) as TaskStatus[]).find((status) => columns[status].some((t) => t.id === id))
+  }
+
+  function columnTitle(status: TaskStatus | undefined): string | undefined {
+    return KANBAN_COLUMNS.find((c) => c.status === status)?.title
+  }
+
+  // Screen-reader narration for the drag lifecycle — this, plus the KeyboardSensor above, is
+  // what makes the Kanban board actually operable (not just visible) without a mouse.
+  const announcements: Announcements = {
+    onDragStart({ active }) {
+      const task = taskLookup.get(String(active.id))
+      return task ? `Picked up task "${task.title}".` : ''
+    },
+    onDragOver({ active, over }) {
+      if (!over) return ''
+      const task = taskLookup.get(String(active.id))
+      const status = (over.data.current?.status as TaskStatus | undefined) ?? findColumnOf(String(over.id))
+      const title = columnTitle(status)
+      return task && title ? `Task "${task.title}" is over the ${title} column.` : ''
+    },
+    onDragEnd({ active, over }) {
+      const task = taskLookup.get(String(active.id))
+      if (!task) return ''
+      if (!over) return `Moving task "${task.title}" was cancelled.`
+      const status = (over.data.current?.status as TaskStatus | undefined) ?? findColumnOf(String(over.id))
+      const title = columnTitle(status)
+      return title ? `Task "${task.title}" moved to ${title}.` : `Task "${task.title}" dropped.`
+    },
+    onDragCancel({ active }) {
+      const task = taskLookup.get(String(active.id))
+      return task ? `Moving task "${task.title}" was cancelled.` : ''
+    },
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -137,6 +170,7 @@ export function KanbanBoard({ projectId, tasks, onTaskClick }: KanbanBoardProps)
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      accessibility={{ announcements }}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
