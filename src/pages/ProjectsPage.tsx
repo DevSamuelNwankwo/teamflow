@@ -1,7 +1,12 @@
-import { useState } from 'react'
-import { FolderKanban, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { FolderKanban, Plus, SearchX } from 'lucide-react'
 import { useProjects } from '@/hooks/useProjects'
 import { useCreateProject, useDeleteProject, useUpdateProject } from '@/hooks/useProjectMutations'
+import { useTeamMembers } from '@/hooks/useTeamMembers'
+import { useUrlFilters } from '@/hooks/useUrlFilters'
+import { filterSortProjects, hasActiveFilters, PROJECT_SORT_OPTIONS } from '@/lib/filterSort'
+import { PROJECT_STATUSES, PRIORITY_LEVELS } from '@/types/enums'
+import { PROJECT_STATUS_STYLES, PRIORITY_STYLES } from '@/lib/constants'
 import type { ProjectWithMembers } from '@/types/project'
 import type { ProjectFormValues } from '@/lib/validation/projectSchema'
 import { ProjectCard } from '@/components/projects/ProjectCard'
@@ -11,6 +16,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
+import { FilterBar } from '@/components/ui/FilterBar'
 import { CardSkeletonGrid } from '@/components/ui/Skeleton'
 import { notify } from '@/lib/toast'
 import { getReadableError } from '@/api/errors'
@@ -19,8 +25,16 @@ type DialogState = { mode: 'create' } | { mode: 'edit'; project: ProjectWithMemb
 
 export function ProjectsPage() {
   const { data: projects, isLoading, isError, refetch } = useProjects()
+  const { data: members } = useTeamMembers()
+  const { filters, setFilter, clearFilters } = useUrlFilters()
   const [dialog, setDialog] = useState<DialogState>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProjectWithMembers | null>(null)
+
+  const visibleProjects = useMemo(
+    () => (projects ? filterSortProjects(projects, filters) : []),
+    [projects, filters],
+  )
+  const filtersActive = hasActiveFilters(filters)
 
   const createProject = useCreateProject()
   const updateProject = useUpdateProject(dialog?.mode === 'edit' ? dialog.project.id : '')
@@ -69,6 +83,20 @@ export function ProjectsPage() {
         </Button>
       </div>
 
+      {!isLoading && !isError && projects && projects.length > 0 && (
+        <FilterBar
+          filters={filters}
+          onChange={setFilter}
+          onClear={clearFilters}
+          hasActiveFilters={filtersActive}
+          searchPlaceholder="Search projects…"
+          statusOptions={PROJECT_STATUSES.map((s) => ({ value: s, label: PROJECT_STATUS_STYLES[s].label }))}
+          priorityOptions={PRIORITY_LEVELS.map((p) => ({ value: p, label: PRIORITY_STYLES[p].label }))}
+          assigneeOptions={(members ?? []).map((m) => ({ value: m.id, label: m.name }))}
+          sortOptions={PROJECT_SORT_OPTIONS}
+        />
+      )}
+
       {isLoading && <CardSkeletonGrid />}
 
       {isError && <ErrorState message="Couldn't load projects." onRetry={() => refetch()} />}
@@ -82,9 +110,22 @@ export function ProjectsPage() {
         />
       )}
 
-      {!isLoading && !isError && projects && projects.length > 0 && (
+      {!isLoading && !isError && projects && projects.length > 0 && visibleProjects.length === 0 && (
+        <EmptyState
+          icon={SearchX}
+          title="No projects match your filters"
+          description="Try a different search term or clear the filters to see everything."
+          action={
+            <Button variant="secondary" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          }
+        />
+      )}
+
+      {!isLoading && !isError && visibleProjects.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
+          {visibleProjects.map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
