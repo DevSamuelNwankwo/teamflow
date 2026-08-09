@@ -12,7 +12,10 @@ interface AuthContextValue {
   user: User | null
   profile: Profile | null
   login: (input: LoginInput) => Promise<void>
-  register: (input: RegisterInput) => Promise<void>
+  /** Returns false when Supabase requires email confirmation before a session exists yet
+   *  (project-level setting) — callers should show a "check your email" message rather than
+   *  navigating into the app. Returns true when registration logs the user straight in. */
+  register: (input: RegisterInput) => Promise<boolean>
   logout: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -65,7 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authApi.login(input)
     },
     register: async (input) => {
-      await authApi.register(input)
+      const data = await authApi.register(input)
+      return Boolean(data.session)
     },
     logout: async () => {
       await authApi.logout()

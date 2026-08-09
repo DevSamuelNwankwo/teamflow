@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { FormField } from '@/components/ui/FormField'
 import { getReadableError } from '@/api/errors'
+import { notify } from '@/lib/toast'
 
 export function RegisterPage() {
   const { register: registerUser } = useAuth()
   const navigate = useNavigate()
   const [formError, setFormError] = useState<string | null>(null)
+  const [confirmationSent, setConfirmationSent] = useState(false)
 
   const {
     register,
@@ -23,11 +25,33 @@ export function RegisterPage() {
   async function onSubmit(values: RegisterFormValues) {
     setFormError(null)
     try {
-      await registerUser(values)
-      navigate('/app/dashboard', { replace: true })
+      const hasSession = await registerUser(values)
+      if (hasSession) {
+        notify.success(`Welcome to TeamFlow, ${values.name.split(' ')[0]}!`)
+        navigate('/app/dashboard', { replace: true })
+      } else {
+        // This Supabase project requires email confirmation before a session is issued.
+        setConfirmationSent(true)
+      }
     } catch (error) {
       setFormError(getReadableError(error))
     }
+  }
+
+  if (confirmationSent) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-sunken px-4">
+        <div className="w-full max-w-sm rounded-card border border-border-default bg-surface p-8 text-center shadow-card">
+          <h1 className="mb-2 text-xl font-semibold text-text-primary">Check your email</h1>
+          <p className="mb-6 text-sm text-text-secondary">
+            We&apos;ve sent a confirmation link to your inbox. Click it to activate your account, then log in.
+          </p>
+          <Link to="/login">
+            <Button className="w-full">Back to log in</Button>
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

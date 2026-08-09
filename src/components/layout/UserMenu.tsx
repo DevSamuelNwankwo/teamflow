@@ -3,6 +3,8 @@ import { LogOut, User as UserIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Avatar } from '@/components/ui/Avatar'
+import { notify } from '@/lib/toast'
+import { getReadableError } from '@/api/errors'
 
 export function UserMenu() {
   const { user, profile, logout } = useAuth()
@@ -32,8 +34,12 @@ export function UserMenu() {
 
   async function handleLogout() {
     setOpen(false)
-    await logout()
-    navigate('/login', { replace: true })
+    try {
+      await logout()
+      navigate('/login', { replace: true })
+    } catch (error) {
+      notify.error(getReadableError(error))
+    }
   }
 
   return (
