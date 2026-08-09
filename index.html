@@ -4,7 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>teamflow</title>
+    <title>TeamFlow</title>
+    <script>
+      // Applied synchronously, before first paint, to avoid a flash of the wrong theme.
+      // Mirrors the persisted value zustand/persist writes to the same localStorage key.
+      try {
+        var stored = JSON.parse(localStorage.getItem('teamflow-ui') || 'null')
+        var theme = stored && stored.state && stored.state.theme
+        if (theme === 'dark') document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
