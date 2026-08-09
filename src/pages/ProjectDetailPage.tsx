@@ -14,6 +14,7 @@ import { ProjectForm } from '@/components/projects/ProjectForm'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { ProjectKanbanSection } from '@/components/tasks/ProjectKanbanSection'
 import { formatDate, formatDueLabel } from '@/lib/formatters'
 import { notify } from '@/lib/toast'
 import { getReadableError } from '@/api/errors'
@@ -135,11 +136,7 @@ export function ProjectDetailPage() {
       </div>
 
       <div className="mt-6">
-        <EmptyState
-          icon={LayoutGrid}
-          title="This project's Kanban board is coming soon"
-          description="Task creation, drag-and-drop, and status tracking for this project will appear here."
-        />
+        <ProjectKanbanSection projectId={project.id} projectName={project.name} />
       </div>
 
       <Modal open={editing} onClose={() => setEditing(false)} title="Edit project" size="lg">
